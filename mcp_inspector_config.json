@@ -1,0 +1,131 @@
+{
+  "name": "Personality Test MCP",
+  "description": "A Model Context Protocol implementation for personality testing",
+  "version": "0.1.0",
+  "endpoint": "http://localhost:8000/mcp",
+  "healthEndpoint": "http://localhost:8000/health",
+  "requestSchema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The user's query or command"
+      },
+      "context": {
+        "type": "object",
+        "description": "Context information for the session",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Unique identifier for the test session"
+          },
+          "current_question": {
+            "type": "integer",
+            "description": "Current question number"
+          },
+          "total_questions": {
+            "type": "integer",
+            "description": "Total number of questions in the test"
+          },
+          "progress": {
+            "type": "string",
+            "description": "Progress through the test (e.g., '3/20')"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the test is completed"
+          },
+          "personality_type": {
+            "type": "string",
+            "description": "The determined personality type (e.g., 'INTJ')"
+          }
+        }
+      }
+    },
+    "required": ["query"]
+  },
+  "responseSchema": {
+    "type": "object",
+    "properties": {
+      "response": {
+        "type": "string",
+        "description": "The response text to show to the user"
+      },
+      "context": {
+        "type": "object",
+        "description": "Updated context information",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Unique identifier for the test session"
+          },
+          "current_question": {
+            "type": "integer",
+            "description": "Current question number"
+          },
+          "total_questions": {
+            "type": "integer",
+            "description": "Total number of questions in the test"
+          },
+          "progress": {
+            "type": "string",
+            "description": "Progress through the test (e.g., '3/20')"
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether the test is completed"
+          },
+          "personality_type": {
+            "type": "string",
+            "description": "The determined personality type (e.g., 'INTJ')"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the personality type"
+          }
+        }
+      }
+    },
+    "required": ["response"]
+  },
+  "sampleQueries": [
+    {
+      "query": "start test",
+      "description": "Start a new personality test"
+    },
+    {
+      "query": "answer: 3",
+      "description": "Answer the current question with a neutral response"
+    },
+    {
+      "query": "back",
+      "description": "Go back to the previous question"
+    },
+    {
+      "query": "results",
+      "description": "Get the personality test results"
+    }
+  ],
+  "testSequence": [
+    {
+      "query": "start test",
+      "expectedResponseContains": "Let's start your personality test"
+    },
+    {
+      "query": "answer: 3",
+      "expectedResponseContains": "Question 2"
+    },
+    {
+      "query": "answer: 3",
+      "expectedResponseContains": "Question 3"
+    },
+    {
+      "query": "back",
+      "expectedResponseContains": "Going back to Question 2"
+    },
+    {
+      "query": "answer: 5",
+      "expectedResponseContains": "Question 3"
+    }
+  ]
+}
