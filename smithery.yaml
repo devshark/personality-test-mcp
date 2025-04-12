@@ -1,51 +1,166 @@
-project:
-  name: personality-test-mcp
-  description: A Model Context Protocol (MCP) implementation for personality testing with Ollama integration
+name: personality-test-mcp
+description: A Model Context Protocol (MCP) implementation for personality testing with Ollama integration
+version: 0.1.0
+author: Model Context Protocols Contributors
+license: ISC
 
-api:
-  name: personality-test-mcp-api
-  description: API for personality testing using MCP
-  endpoints:
-    - path: /mcp
-      method: POST
-      description: Main MCP endpoint for personality test interactions
-      request:
-        content_type: application/json
-        schema:
-          type: object
-          properties:
-            query:
-              type: string
-              description: The user's query or command
-            context:
-              type: object
-              description: Context information for the session
-      response:
-        content_type: application/json
-        schema:
-          type: object
-          properties:
-            response:
-              type: string
-              description: The response text to show to the user
-            context:
-              type: object
-              description: Updated context information
-    - path: /health
-      method: GET
-      description: Health check endpoint
-      response:
-        content_type: application/json
-        schema:
-          type: object
-          properties:
-            status:
-              type: string
-              description: Health status of the service
+startCommand: python server/app.py
+configSchema:
+  type: object
+  properties:
+    port:
+      type: integer
+      description: Port to run the server on
+      default: 8000
+    debug:
+      type: boolean
+      description: Whether to run in debug mode
+      default: false
+    ollama_url:
+      type: string
+      description: URL for Ollama API
+      default: http://localhost:11434
+    ollama_model:
+      type: string
+      description: Default Ollama model to use
+      default: llama3
+
+commandFunction: |
+  async function command(config, context) {
+    const { port, debug, ollama_url, ollama_model } = config;
+    
+    // Start the server
+    if (context.command === 'start-server') {
+      return {
+        command: `python server/app.py --port ${port} ${debug ? '--debug' : ''}`,
+        description: `Starting personality test MCP server on port ${port}`
+      };
+    }
+    
+    // Run the client
+    if (context.command === 'run-client') {
+      return {
+        command: `python client/mcp_client.py --server http://localhost:${port}`,
+        description: 'Starting personality test MCP client'
+      };
+    }
+    
+    // Run with Ollama integration
+    if (context.command === 'run-ollama') {
+      return {
+        command: `python client/ollama_integration.py --ollama ${ollama_url} --model ${ollama_model}`,
+        description: `Starting personality test with Ollama integration using model ${ollama_model}`
+      };
+    }
+    
+    // Run tests
+    if (context.command === 'test') {
+      return {
+        command: 'pytest',
+        description: 'Running tests for personality test MCP'
+      };
+    }
+    
+    return {
+      command: './run_demo.sh',
+      description: 'Running personality test MCP demo'
+    };
+  }
+
+files:
+  - path: server/app.py
+    description: FastAPI server implementation for personality test MCP
+    
+  - path: client/mcp_client.py
+    description: Client for interacting with the personality test MCP server
+    
+  - path: client/ollama_integration.py
+    description: Integration with Ollama for personalized AI interactions
+    
+  - path: requirements.txt
+    description: Python dependencies for the project
+    
+  - path: run_demo.sh
+    description: Shell script to run the demo
+    
+  - path: Dockerfile
+    description: Docker configuration for containerized deployment
+    
+  - path: README.md
+    description: Project documentation
+    
+  - path: LICENSE
+    description: ISC license file
+
+dependencies:
+  - fastapi==0.104.1
+  - uvicorn==0.24.0
+  - requests==2.31.0
+  - pydantic==2.4.2
+  - uuid==1.30
+
+endpoints:
+  - path: /mcp
+    method: POST
+    description: Main MCP endpoint for personality test interactions
+    request:
+      contentType: application/json
+      schema:
+        type: object
+        properties:
+          query:
+            type: string
+            description: The user's query or command
+          context:
+            type: object
+            description: Context information for the session
+    response:
+      contentType: application/json
+      schema:
+        type: object
+        properties:
+          response:
+            type: string
+            description: The response text to show to the user
+          context:
+            type: object
+            description: Updated context information
+            
+  - path: /health
+    method: GET
+    description: Health check endpoint
+    response:
+      contentType: application/json
+      schema:
+        type: object
+        properties:
+          status:
+            type: string
+            description: Health status of the service
 
 models:
-  - name: PersonalityTest
-    description: Model for personality test data
+  - name: PersonalityQuestion
+    properties:
+      id:
+        type: string
+        description: Unique identifier for the question
+      question:
+        type: string
+        description: The question text
+      dimension:
+        type: string
+        description: The personality dimension this question measures
+        
+  - name: PersonalityType
+    properties:
+      code:
+        type: string
+        description: Four-letter code for the personality type
+      description:
+        type: string
+        description: Description of the personality type
+        
+  - name: TestSession
     properties:
       session_id:
         type: string
@@ -61,122 +176,4 @@ models:
         description: Whether the test is completed
       personality_type:
         type: string
-        description: The determined personality type (e.g., INTJ)
-  
-  - name: PersonalityType
-    description: Model for personality type data
-    properties:
-      code:
-        type: string
-        description: Four-letter code for the personality type
-      description:
-        type: string
-        description: Description of the personality type
-
-components:
-  - name: PersonalityTestServer
-    type: server
-    description: MCP server for personality testing
-    technology: python
-    framework: fastapi
-    port: 8000
-    
-  - name: PersonalityTestClient
-    type: client
-    description: Client for interacting with the personality test MCP server
-    technology: python
-    
-  - name: OllamaIntegration
-    type: integration
-    description: Integration with Ollama for personalized AI interactions
-    technology: python
-    dependencies:
-      - PersonalityTestClient
-
-data:
-  personality_dimensions:
-    - name: Extraversion vs. Introversion
-      code: EI
-      questions: 5
-    - name: Sensing vs. Intuition
-      code: SN
-      questions: 5
-    - name: Thinking vs. Feeling
-      code: TF
-      questions: 5
-    - name: Judging vs. Perceiving
-      code: JP
-      questions: 5
-      
-  personality_types:
-    - code: ISTJ
-      description: Quiet, serious, practical, and dependable. Values traditions and loyalty.
-    - code: ISFJ
-      description: Quiet, friendly, responsible, and conscientious. Committed to meeting obligations.
-    - code: INFJ
-      description: Seeks meaning and connection. Insightful about others with strong values.
-    - code: INTJ
-      description: Independent, analytical, and determined. High standards and original thinking.
-    - code: ISTP
-      description: Tolerant, flexible problem-solver. Interested in how things work.
-    - code: ISFP
-      description: Quiet, friendly, sensitive, and kind. Enjoys the present moment.
-    - code: INFP
-      description: Idealistic, loyal, and adaptable. Cares deeply about personal values.
-    - code: INTP
-      description: Logical, original thinker. Interested in ideas and theoretical concepts.
-    - code: ESTP
-      description: Flexible, tolerant, and spontaneous. Focuses on immediate results.
-    - code: ESFP
-      description: Outgoing, friendly, and accepting. Enjoys making things fun for others.
-    - code: ENFP
-      description: Enthusiastic, creative, and spontaneous. Sees possibilities and connections.
-    - code: ENTP
-      description: Quick, ingenious, and stimulating. Enjoys new challenges.
-    - code: ESTJ
-      description: Practical, realistic, and decisive. Organized and quick to implement decisions.
-    - code: ESFJ
-      description: Warmhearted, conscientious, and cooperative. Seeks harmony and values traditions.
-    - code: ENFJ
-      description: Warm, empathetic, responsive, and responsible. Attuned to others' needs.
-    - code: ENTJ
-      description: Frank, decisive, and assumes leadership easily. Driven to organize and implement.
-
-dependencies:
-  - name: fastapi
-    version: "0.104.1"
-  - name: uvicorn
-    version: "0.24.0"
-  - name: requests
-    version: "2.31.0"
-  - name: pydantic
-    version: "2.4.2"
-  - name: uuid
-    version: "1.30"
-
-deployment:
-  docker:
-    enabled: true
-    base_image: python:3.9-slim
-    expose_ports:
-      - 8000
-  
-  environments:
-    - name: development
-      description: Local development environment
-      variables:
-        DEBUG: "true"
-    
-    - name: production
-      description: Production environment
-      variables:
-        DEBUG: "false"
-
-testing:
-  unit_tests: true
-  integration_tests: true
-
-documentation:
-  readme: true
-  api_docs: true
-  license: ISC
+        description: The determined personality type
