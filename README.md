@@ -8,6 +8,7 @@ This is a Model Context Protocol (MCP) implementation for personality testing. I
 - Scores responses according to established personality frameworks
 - Returns personality type and brief descriptions
 - Integrates with Ollama for personalized AI interactions
+- Allows users to go back and change previous answers
 
 ## Components
 

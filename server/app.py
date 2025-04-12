@@ -100,6 +100,8 @@ async def process_mcp_request(request: MCPRequest):
     # Handle different query types
     if "start test" in query or "take personality test" in query:
         return start_test(session_id)
+    elif "back" in query and not session["completed"] and session["current_question"] > 1:
+        return go_back(session_id)
     elif "answer:" in query and not session["completed"]:
         # Extract answer (1-5) from query
         try:
@@ -128,7 +130,8 @@ async def process_mcp_request(request: MCPRequest):
         elif session["current_question"] > 0:
             current_q = personality_questions[session["current_question"] - 1]
             return MCPResponse(
-                response=f"Please answer the current question: {current_q['question']} (1-5, where 1=Strongly Disagree, 5=Strongly Agree)",
+                response=f"Please answer the current question: {current_q['question']} (1-5, where 1=Strongly Disagree, 5=Strongly Agree)\n\n"
+                        f"Type 'back' to go back to the previous question.",
                 context={"session_id": session_id, "current_question": session["current_question"]}
             )
         else:
@@ -180,7 +183,8 @@ def process_answer(session_id: str, answer: int) -> MCPResponse:
     next_question = personality_questions[session["current_question"] - 1]
     return MCPResponse(
         response=f"Question {session['current_question']}/{len(personality_questions)}: {next_question['question']}\n\n"
-                f"(1=Strongly Disagree, 5=Strongly Agree)",
+                f"(1=Strongly Disagree, 5=Strongly Agree)\n\n"
+                f"Type 'back' to go back to the previous question.",
         context={
             "session_id": session_id, 
             "current_question": session["current_question"],
@@ -244,3 +248,35 @@ async def health_check():
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+def go_back(session_id: str) -> MCPResponse:
+    """Go back to the previous question"""
+    session = active_sessions[session_id]
+    
+    # Can't go back if at first question
+    if session["current_question"] <= 1:
+        return MCPResponse(
+            response="You're already at the first question.",
+            context={"session_id": session_id, "current_question": session["current_question"]}
+        )
+    
+    # Move back one question
+    session["current_question"] -= 1
+    
+    # Get the previous question
+    prev_question = personality_questions[session["current_question"] - 1]
+    
+    # Get the previous answer if it exists
+    prev_answer = session["answers"].get(prev_question["id"], None)
+    prev_answer_text = f" (Your previous answer: {prev_answer})" if prev_answer else ""
+    
+    return MCPResponse(
+        response=f"Going back to Question {session['current_question']}/{len(personality_questions)}: {prev_question['question']}\n\n"
+                f"(1=Strongly Disagree, 5=Strongly Agree){prev_answer_text}\n\n"
+                f"Type 'answer: X' to provide a new answer.",
+        context={
+            "session_id": session_id, 
+            "current_question": session["current_question"],
+            "total_questions": len(personality_questions),
+            "progress": f"{session['current_question']}/{len(personality_questions)}"
+        }
+    )

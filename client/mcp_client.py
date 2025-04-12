@@ -69,14 +69,31 @@ def interactive_test(client: PersonalityTestClient):
     # Process questions until complete
     while "completed" not in client.context or not client.context["completed"]:
         try:
-            answer = int(input("\nYour answer (1-5): "))
-            if 1 <= answer <= 5:
-                response = client.answer_question(answer)
+            user_input = input("\nYour response: ")
+            
+            # Check if user wants to go back
+            if user_input.lower() == "back":
+                response = client.send_query("back")
+                print(f"\n{response['response']}")
+            # Check if input is a number (for convenience)
+            elif user_input.isdigit() and 1 <= int(user_input) <= 5:
+                response = client.answer_question(int(user_input))
                 print(f"\n{response}")
+            # Check if input is in the format "answer: X"
+            elif user_input.lower().startswith("answer:"):
+                try:
+                    answer = int(user_input.split(":")[1].strip())
+                    if 1 <= answer <= 5:
+                        response = client.answer_question(answer)
+                        print(f"\n{response}")
+                    else:
+                        print("\nPlease enter a number between 1 and 5.")
+                except (ValueError, IndexError):
+                    print("\nPlease use the format 'answer: X' where X is a number between 1 and 5.")
             else:
-                print("\nPlease enter a number between 1 and 5.")
+                print("\nPlease enter a number between 1 and 5, or type 'back' to go to the previous question.")
         except ValueError:
-            print("\nPlease enter a valid number.")
+            print("\nPlease enter a valid number or command.")
     
     # Show results
     print("\n" + "=" * 60)
