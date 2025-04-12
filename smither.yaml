@@ -1,0 +1,151 @@
+name: personality-test-mcp
+description: A Model Context Protocol (MCP) implementation for personality testing with Ollama integration
+
+# Define the MCP server configuration
+server:
+  name: personality-test-mcp-server
+  description: MCP server for personality testing
+  port: 8000
+  endpoints:
+    - path: /mcp
+      method: POST
+      description: Main MCP endpoint for personality test interactions
+    - path: /health
+      method: GET
+      description: Health check endpoint
+
+# Define the MCP protocol schema
+protocol:
+  request:
+    properties:
+      query:
+        type: string
+        description: The user's query or command
+      context:
+        type: object
+        description: Context information for the session
+        properties:
+          session_id:
+            type: string
+            description: Unique identifier for the test session
+          current_question:
+            type: integer
+            description: Current question number
+  response:
+    properties:
+      response:
+        type: string
+        description: The response text to show to the user
+      context:
+        type: object
+        description: Updated context information
+        properties:
+          session_id:
+            type: string
+            description: Unique identifier for the test session
+          current_question:
+            type: integer
+            description: Current question number
+          completed:
+            type: boolean
+            description: Whether the test is completed
+          personality_type:
+            type: string
+            description: The determined personality type (e.g., INTJ)
+          description:
+            type: string
+            description: Description of the personality type
+
+# Define the personality test configuration
+personality_test:
+  framework: MBTI
+  dimensions:
+    - name: Extraversion vs. Introversion
+      code: EI
+      questions: 5
+    - name: Sensing vs. Intuition
+      code: SN
+      questions: 5
+    - name: Thinking vs. Feeling
+      code: TF
+      questions: 5
+    - name: Judging vs. Perceiving
+      code: JP
+      questions: 5
+  types:
+    - code: ISTJ
+      description: Quiet, serious, practical, and dependable. Values traditions and loyalty.
+    - code: ISFJ
+      description: Quiet, friendly, responsible, and conscientious. Committed to meeting obligations.
+    - code: INFJ
+      description: Seeks meaning and connection. Insightful about others with strong values.
+    - code: INTJ
+      description: Independent, analytical, and determined. High standards and original thinking.
+    - code: ISTP
+      description: Tolerant, flexible problem-solver. Interested in how things work.
+    - code: ISFP
+      description: Quiet, friendly, sensitive, and kind. Enjoys the present moment.
+    - code: INFP
+      description: Idealistic, loyal, and adaptable. Cares deeply about personal values.
+    - code: INTP
+      description: Logical, original thinker. Interested in ideas and theoretical concepts.
+    - code: ESTP
+      description: Flexible, tolerant, and spontaneous. Focuses on immediate results.
+    - code: ESFP
+      description: Outgoing, friendly, and accepting. Enjoys making things fun for others.
+    - code: ENFP
+      description: Enthusiastic, creative, and spontaneous. Sees possibilities and connections.
+    - code: ENTP
+      description: Quick, ingenious, and stimulating. Enjoys new challenges.
+    - code: ESTJ
+      description: Practical, realistic, and decisive. Organized and quick to implement decisions.
+    - code: ESFJ
+      description: Warmhearted, conscientious, and cooperative. Seeks harmony and values traditions.
+    - code: ENFJ
+      description: Warm, empathetic, responsive, and responsible. Attuned to others' needs.
+    - code: ENTJ
+      description: Frank, decisive, and assumes leadership easily. Driven to organize and implement.
+
+# Define Ollama integration
+ollama:
+  enabled: true
+  default_model: llama3
+  endpoint: http://localhost:11434
+  personality_prompts:
+    enabled: true
+    description: Customize AI responses based on personality type
+
+# Define deployment options
+deployment:
+  docker:
+    enabled: true
+    image: personality-test-mcp
+    ports:
+      - 8000:8000
+  kubernetes:
+    enabled: false
+
+# Define development settings
+development:
+  venv: true
+  requirements:
+    - fastapi==0.104.1
+    - uvicorn==0.24.0
+    - requests==2.31.0
+    - pydantic==2.4.2
+    - uuid==1.30
+
+# Define testing configuration
+testing:
+  unit_tests: true
+  integration_tests: true
+  test_coverage: 80
+
+# Define documentation
+documentation:
+  readme: true
+  api_docs: true
+  examples: true
+
+# Define license
+license: ISC
