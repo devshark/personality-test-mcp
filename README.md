@@ -1,5 +1,7 @@
 # Personality Test MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@devshark/personality-test-mcp)](https://smithery.ai/server/@devshark/personality-test-mcp)
+
 This is a Model Context Protocol (MCP) implementation for personality testing. It allows AI models to administer personality tests, score responses, and provide personality type assessments.
 
 ## Features
