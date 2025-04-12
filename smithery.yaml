@@ -1,65 +1,100 @@
-name: personality-test-mcp
-description: A Model Context Protocol (MCP) implementation for personality testing with Ollama integration
+project:
+  name: personality-test-mcp
+  description: A Model Context Protocol (MCP) implementation for personality testing with Ollama integration
 
-# Define the MCP server configuration
-server:
-  name: personality-test-mcp-server
-  description: MCP server for personality testing
-  port: 8000
+api:
+  name: personality-test-mcp-api
+  description: API for personality testing using MCP
   endpoints:
     - path: /mcp
       method: POST
       description: Main MCP endpoint for personality test interactions
+      request:
+        content_type: application/json
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+              description: The user's query or command
+            context:
+              type: object
+              description: Context information for the session
+      response:
+        content_type: application/json
+        schema:
+          type: object
+          properties:
+            response:
+              type: string
+              description: The response text to show to the user
+            context:
+              type: object
+              description: Updated context information
     - path: /health
       method: GET
       description: Health check endpoint
-
-# Define the MCP protocol schema
-protocol:
-  request:
-    properties:
-      query:
-        type: string
-        description: The user's query or command
-      context:
-        type: object
-        description: Context information for the session
-        properties:
-          session_id:
-            type: string
-            description: Unique identifier for the test session
-          current_question:
-            type: integer
-            description: Current question number
-  response:
-    properties:
       response:
-        type: string
-        description: The response text to show to the user
-      context:
-        type: object
-        description: Updated context information
-        properties:
-          session_id:
-            type: string
-            description: Unique identifier for the test session
-          current_question:
-            type: integer
-            description: Current question number
-          completed:
-            type: boolean
-            description: Whether the test is completed
-          personality_type:
-            type: string
-            description: The determined personality type (e.g., INTJ)
-          description:
-            type: string
-            description: Description of the personality type
+        content_type: application/json
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              description: Health status of the service
 
-# Define the personality test configuration
-personality_test:
-  framework: MBTI
-  dimensions:
+models:
+  - name: PersonalityTest
+    description: Model for personality test data
+    properties:
+      session_id:
+        type: string
+        description: Unique identifier for the test session
+      current_question:
+        type: integer
+        description: Current question number
+      answers:
+        type: object
+        description: User's answers to questions
+      completed:
+        type: boolean
+        description: Whether the test is completed
+      personality_type:
+        type: string
+        description: The determined personality type (e.g., INTJ)
+  
+  - name: PersonalityType
+    description: Model for personality type data
+    properties:
+      code:
+        type: string
+        description: Four-letter code for the personality type
+      description:
+        type: string
+        description: Description of the personality type
+
+components:
+  - name: PersonalityTestServer
+    type: server
+    description: MCP server for personality testing
+    technology: python
+    framework: fastapi
+    port: 8000
+    
+  - name: PersonalityTestClient
+    type: client
+    description: Client for interacting with the personality test MCP server
+    technology: python
+    
+  - name: OllamaIntegration
+    type: integration
+    description: Integration with Ollama for personalized AI interactions
+    technology: python
+    dependencies:
+      - PersonalityTestClient
+
+data:
+  personality_dimensions:
     - name: Extraversion vs. Introversion
       code: EI
       questions: 5
@@ -72,7 +107,8 @@ personality_test:
     - name: Judging vs. Perceiving
       code: JP
       questions: 5
-  types:
+      
+  personality_types:
     - code: ISTJ
       description: Quiet, serious, practical, and dependable. Values traditions and loyalty.
     - code: ISFJ
@@ -106,46 +142,41 @@ personality_test:
     - code: ENTJ
       description: Frank, decisive, and assumes leadership easily. Driven to organize and implement.
 
-# Define Ollama integration
-ollama:
-  enabled: true
-  default_model: llama3
-  endpoint: http://localhost:11434
-  personality_prompts:
-    enabled: true
-    description: Customize AI responses based on personality type
+dependencies:
+  - name: fastapi
+    version: "0.104.1"
+  - name: uvicorn
+    version: "0.24.0"
+  - name: requests
+    version: "2.31.0"
+  - name: pydantic
+    version: "2.4.2"
+  - name: uuid
+    version: "1.30"
 
-# Define deployment options
 deployment:
   docker:
     enabled: true
-    image: personality-test-mcp
-    ports:
-      - 8000:8000
-  kubernetes:
-    enabled: false
+    base_image: python:3.9-slim
+    expose_ports:
+      - 8000
+  
+  environments:
+    - name: development
+      description: Local development environment
+      variables:
+        DEBUG: "true"
+    
+    - name: production
+      description: Production environment
+      variables:
+        DEBUG: "false"
 
-# Define development settings
-development:
-  venv: true
-  requirements:
-    - fastapi==0.104.1
-    - uvicorn==0.24.0
-    - requests==2.31.0
-    - pydantic==2.4.2
-    - uuid==1.30
-
-# Define testing configuration
 testing:
   unit_tests: true
   integration_tests: true
-  test_coverage: 80
 
-# Define documentation
 documentation:
   readme: true
   api_docs: true
-  examples: true
-
-# Define license
-license: ISC
+  license: ISC
